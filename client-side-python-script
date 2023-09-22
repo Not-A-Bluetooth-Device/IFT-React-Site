@@ -8,11 +8,12 @@
 #             This program will be run on a Raspberry Pi 4+ with a SenseHat.
 #             This device will be on the client side, meaning the database information will be known. 
 #
-#  Functions: connect_db() - Connects to the database
-#             get_temp() - Gets the temperature from the sensor
-#             check_temp() - Checks the temperature against the range
-#             write_temp() - Writes the temperature to the database
-#             send_email() - Sends an email alert if the temperature is out of range
+#  Functions: connect_db() - Connects to the database.
+#             get_devices() - Get all the devices associated with the client, will also want to grab the min and max temp for each device.
+#             get_temp() - Gets the temperature from the sensor.
+#             check_temp() - Checks the temperature against the range.
+#             write_temp() - Writes the temperature to the database.
+#             send_email() - Sends an email alert if the temperature is out of range.
 #
 #  Dependencies: mysql.connector, sense_hat, RTIMU?
 #
@@ -45,9 +46,9 @@ except Exception as e:
 def db_connect():
     try:
         dvc = mysql.connect(
-            host = "192.168.140.29", # Host will be identical for each instance of this script.
-            user="DanielRead", # Username and password would be hard-coded in?
-            password="lRLZZV17fdVmOgmd") # Database is populated as a global variable on lie 32, this will be the client specific database.
+            host = "", # Host will be identical for each instance of this script.
+            user="", # Username and password would be hard-coded in?
+            password="") # Database is populated as a global variable on lie 32, this will be the client specific database.
     except Exception as e:
         t = datetime.datetime.now()
         l = currentframe().f_lineno
