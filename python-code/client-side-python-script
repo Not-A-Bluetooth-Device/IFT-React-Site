@@ -7,12 +7,12 @@
 #             This program will be run on a Raspberry Pi 4+ with a SenseHat.
 #             This device will be on the client side, meaning the database information will be known. 
 #
-#  Functions: connect_db() - Connects to the database.
+#  Functions: connect_db() - Connects to the database
 #             get_devices() - Get all the devices associated with the client, will also want to grab the min and max temp for each device.
-#             get_temp() - Gets the temperature from the sensor.
-#             check_temp() - Checks the temperature against the range.
-#             write_temp() - Writes the temperature to the database.
-#             send_email() - Sends an email alert if the temperature is out of range.
+#             get_temp() - Gets the temperature from the sensor
+#             check_temp() - Checks the temperature against the range
+#             write_temp() - Writes the temperature to the database
+#             send_email() - Sends an email alert if the temperature is out of range
 #
 #  Dependencies: mysql.connector, sense_hat, RTIMU?
 #
@@ -29,7 +29,7 @@ logging.basicConfig(filename='temperature_logger.log', level=logging.INFO)
 global test_mode
 global database
 test_mode = True
-database = "core"
+database = "dam" # this will be the client code from our users / clients table.
 
 try: 
     from sense_hat import SenseHat
@@ -47,7 +47,7 @@ def db_connect():
         dvc = mysql.connect(
             host = "", # Host will be identical for each instance of this script.
             user="", # Username and password would be hard-coded in?
-            password="") # Database is populated as a global variable on lie 32, this will be the client specific database.
+            password="") # Database is populated as a global variable on line 32, this will be the client specific database.
     except Exception as e:
         t = datetime.datetime.now()
         l = currentframe().f_lineno
@@ -61,11 +61,8 @@ def db_connect():
 def get_devices(db):
     sql = "SELECT desk FROM " + database + ".users WHERE deleted_at IS NULL AND desk IS NOT NULL LIMIT 25;"
     result = execute_query(db, sql)
-    devices = []
-    for i in result: 
-        j = str(i).strip("'()',")
-        devices.append(j)
-    return devices
+    logging.info("Waking up.")
+    return [row[0] for row in result]
 
 def get_temp():
     temp = random.randint(0, 100)
@@ -73,10 +70,13 @@ def get_temp():
 
 def write_temp(temp, device, db):
     t = datetime.datetime.now()
-    sql = "INSERT INTO " + database + ".log (device, temperature, created_at) VALUES ('" + device + "', '" + str(temp) + "', '" + str(t) + "');"
-    # execute_query(db, sql)
-    logging.info("Record Insered into " + database + ".log")
-    logging.info(device + " | " + str(temp) + " | " + str(t))  
+    sql = "INSERT INTO " + database + ".log (device, temperature, created_at) VALUES (%s, %s, %s);"
+    values = (device, temp, t)
+    if test_mode == True:
+        logging.info("Record Insered into " + database + ".log")
+        logging.info(device + " | " + str(temp) + " | " + str(t))  
+    else:
+        execute_query(db, sql, values)
     return
 
 def check_temp(temp):
@@ -85,16 +85,27 @@ def check_temp(temp):
     # for production: Devices will be passed in, or list of min / max temperatures will be passed in to compare against.
     return d
 
-def send_email():
-    logging.info("Sending email. Temperature out of range")
+def notify_user(temp, sensor):
+    t = datetime.datetime.now()
+    if test_mode == True:
+        logging.info("Temperature out of range, sending email alert.")
+        logging.info("Email sent at: " + str(t))
+        logging.info("Temperature: " + str(temp) + " | Sensor: " + str(sensor))
+    else:
+        # Send email alert
+        logging.info("Message from: " + sensor + " | Info: " + temp)
     return
 
-def execute_query(db, sql):
+def execute_query(db, sql, values=None):
     try:
         mycursor = db.cursor()
-        mycursor.execute(sql)
+        if values == None:
+            mycursor.execute(sql)
+        else:
+            mycursor.execute(sql, values)
         myresult = mycursor.fetchall()
-    except: 
+        # db.commit() Not doing this on the Wilber server
+    except Exception as e: 
         t = datetime.datetime.now()
         l = currentframe().f_lineno
         m = str(t) + " | Error, line " + str(l)
@@ -107,19 +118,32 @@ def execute_query(db, sql):
     return myresult
 
 # Main control loop
-while True:
+try:
     dev_db = db_connect()
     devices = get_devices(dev_db)
-    for d in devices:
-        temp = get_temp()
-        write_temp(temp, d, dev_db)
-        c = check_temp(temp)
-        if c == False:
-            send_email()
-    logging.info("Sleeping for 5 seconds.")
-    time.sleep(5)
-    logging.info("Waking up.")
-    logging.info("Program complete.")
-    break
 
-dev_db.close()
+    while True:
+        logging.info("Waking up.")
+        for sensor in devices:
+            temp = get_temp()
+            write_temp(temp, sensor, dev_db)
+            temp_in_range = check_temp(temp)
+            if temp_in_range == False:
+                notify_user(temp, sensor)
+        logging.info("Sleeping for 15 minutes.")
+        time.sleep(1) # Sleep will be set to 15 minutes or something
+        if test_mode == True: # Break out of the loop after one iteration while testing
+            dev_db.close()
+            break 
+except Exception as e:
+    t = datetime.datetime.now()
+    l = currentframe().f_lineno
+    m = str(t) + " | Error, line " + str(l)
+    logging.error(m + " | Unable to run main control loop.")
+    logging.info(type(e))
+    logging.info(e)
+    err1 = "Main Control Loop"
+    err2 = "Program aborted, restart on brdige."
+    notify_user(err1, err2)
+    dev_db.close()
+    sys.exit()
