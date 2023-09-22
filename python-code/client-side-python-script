@@ -1,7 +1,6 @@
-# Created By: Daniel Myerscough
+# Created By: Daniel Myerscough, Kaho Wentzel, Ryan Abernethy and Jasmine Kaur
 # Created On: 09-22-2023
 #    Purpose: IFT 402 Captstone Project
-#             In co-ordination with Kaho Wentzel, Ryan Abernethy and Jasmine Kaur
 #             This program is designed to log temperature data from the Raspberry Pi  
 #             and write it to a MySQL database.
 #             Program will also send out an email alert if the temperature is out of range.
