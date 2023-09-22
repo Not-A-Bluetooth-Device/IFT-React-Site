@@ -1,0 +1,97 @@
+# Created By: Daniel Myerscough
+# Created On: 09-22-2023
+#    Purpose: IFT 402 Captstone Project
+#             In co-ordination with Kaho Wentzel, Ryan Abernethy and Jasmine Kaur
+#             This program is designed to log temperature data from the Raspberry Pi  
+#             and write it to a MySQL database.
+#             Program will also send out an email alert if the temperature is out of range.
+#
+#  Functions: connect_db() - Connects to the database
+#             get_temp() - Gets the temperature from the sensor
+#             check_temp() - Checks the temperature against the range
+#             write_temp() - Writes the temperature to the database
+#             send_email() - Sends an email alert if the temperature is out of range
+#
+#  Dependencies: mysql.connector, sense_hat, RTIMU?
+#
+# Imports and global variables:
+import logging
+import datetime
+import time
+import random # For testing
+import sys
+import os
+from inspect import currentframe
+import mysql.connector as mysql
+logging.basicConfig(filename='temperature_logger.log', level=logging.INFO)
+try: 
+    from sense_hat import SenseHat
+except Exception as e:
+    t = datetime.datetime.now()
+    l = currentframe().f_lineno
+    m = str(t) + " | Error, line " + str(l)
+    logging.error(m + " | Unable to import modules.")
+    logging.info(type(e))
+    logging.info(e)
+
+# Functions
+def db_connect():
+# Will need actual database information here, will write temperature to log files for now.
+    try:
+        dvc = mysql.connect(
+            host = "",
+            user="",
+            password="",
+            database="")
+    except Exception as e:
+        t = datetime.datetime.now()
+        l = currentframe().f_lineno
+        m = str(t) + " | Error, line " + str(l)
+        logging.error(m + " | Unable to connect to the database.")
+        logging.info(type(e))
+        logging.info(e)
+        sys.exit()
+
+def get_devices():
+    print("Getting devices.")
+    logging.info("Getting devices.")
+    devices = ["device1", "device2", "device3"]
+    return devices
+
+def get_temp():
+    print("Definitely getting the temperature....")
+    logging.info("Getting the temperature.")
+    return 
+
+def write_temp():
+    print("Writing the temperature to the database.")
+    logging.info("Writing the temperature to the database.")
+    return
+
+def check_temp():
+    print("Checking the temperature.")
+    logging.info("Checking the temperature.")
+    d = bool(random.getrandbits(1))
+    logging.info("Temperature is: " + str(d))
+    return d
+
+def send_email():
+    print("Sending email.")
+    logging.info("Sending email.")
+    return
+
+# Main control loop
+while True:
+    db_connect()
+    devices = get_devices()
+    for d in devices:
+        get_temp()
+        write_temp()
+        c = check_temp()
+        if c == True:
+            send_email()
+    logging.info("Sleeping for 5 seconds.")
+    time.sleep(5)
+    logging.info("Waking up.")
+    logging.info("Program complete.")
+    break
