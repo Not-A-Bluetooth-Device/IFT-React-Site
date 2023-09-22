@@ -1,0 +1,96 @@
+ERROR:root:2023-09-22 15:05:43.814442 | Error, line 38 | Unable to import modules.
+INFO:root:<class 'ModuleNotFoundError'>
+INFO:root:No module named 'RTIMU'
+INFO:mysql.connector:package: mysql.connector.plugins
+INFO:mysql.connector:plugin_name: caching_sha2_password
+INFO:mysql.connector:AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+INFO:root:Record Insered into core.log
+INFO:root: | 60 | 2023-09-22 15:05:43.970511
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:6 | 41 | 2023-09-22 15:05:43.971456
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:*7 | 36 | 2023-09-22 15:05:43.971456
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:36 | 82 | 2023-09-22 15:05:43.972733
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:27 | 33 | 2023-09-22 15:05:43.973448
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:5 | 75 | 2023-09-22 15:05:43.973448
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:23 | 46 | 2023-09-22 15:05:43.973448
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:14 | 37 | 2023-09-22 15:05:43.973448
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:85 | 39 | 2023-09-22 15:05:43.974481
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:726 | 19 | 2023-09-22 15:05:43.974481
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:7 | 28 | 2023-09-22 15:05:43.975447
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:61 | 93 | 2023-09-22 15:05:43.975447
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:738 | 12 | 2023-09-22 15:05:43.975447
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root:*5 | 43 | 2023-09-22 15:05:43.976449
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root: | 1 | 2023-09-22 15:05:43.976698
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:*74 | 52 | 2023-09-22 15:05:43.976698
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:*12 | 53 | 2023-09-22 15:05:43.976698
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:*8 | 78 | 2023-09-22 15:05:43.977703
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root: | 19 | 2023-09-22 15:05:43.977703
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root: | 73 | 2023-09-22 15:05:43.977703
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root: | 25 | 2023-09-22 15:05:43.978482
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:770 | 48 | 2023-09-22 15:05:43.978482
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root:64 | 8 | 2023-09-22 15:05:43.978907
+INFO:root:Temperature is in range: True
+INFO:root:Record Insered into core.log
+INFO:root: | 9 | 2023-09-22 15:05:43.978907
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Record Insered into core.log
+INFO:root: | 88 | 2023-09-22 15:05:43.978907
+INFO:root:Temperature is in range: False
+INFO:root:Sending email. Temperature out of range
+INFO:root:Sleeping for 5 seconds.
+INFO:root:Waking up.
+INFO:root:Program complete.
