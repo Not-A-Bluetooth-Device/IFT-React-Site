@@ -5,6 +5,8 @@
 #             This program is designed to log temperature data from the Raspberry Pi  
 #             and write it to a MySQL database.
 #             Program will also send out an email alert if the temperature is out of range.
+#             This program will be run on a Raspberry Pi 4+ with a SenseHat.
+#             This device will be on the client side, meaning the database information will be known. 
 #
 #  Functions: connect_db() - Connects to the database
 #             get_temp() - Gets the temperature from the sensor
@@ -24,6 +26,11 @@ import os
 from inspect import currentframe
 import mysql.connector as mysql
 logging.basicConfig(filename='temperature_logger.log', level=logging.INFO)
+global test_mode
+global database
+test_mode = True
+database = "core"
+
 try: 
     from sense_hat import SenseHat
 except Exception as e:
@@ -36,13 +43,11 @@ except Exception as e:
 
 # Functions
 def db_connect():
-# Will need actual database information here, will write temperature to log files for now.
     try:
         dvc = mysql.connect(
-            host = "",
-            user="",
-            password="",
-            database="")
+            host = "192.168.140.29", # Host will be identical for each instance of this script.
+            user="DanielRead", # Username and password would be hard-coded in?
+            password="lRLZZV17fdVmOgmd") # Database is populated as a global variable on lie 32, this will be the client specific database.
     except Exception as e:
         t = datetime.datetime.now()
         l = currentframe().f_lineno
@@ -51,47 +56,70 @@ def db_connect():
         logging.info(type(e))
         logging.info(e)
         sys.exit()
+    return dvc
 
-def get_devices():
-    print("Getting devices.")
-    logging.info("Getting devices.")
-    devices = ["device1", "device2", "device3"]
+def get_devices(db):
+    sql = "SELECT desk FROM " + database + ".users WHERE deleted_at IS NULL AND desk IS NOT NULL LIMIT 25;"
+    result = execute_query(db, sql)
+    devices = []
+    for i in result: 
+        j = str(i).strip("'()',")
+        devices.append(j)
     return devices
 
 def get_temp():
-    print("Definitely getting the temperature....")
-    logging.info("Getting the temperature.")
-    return 
+    temp = random.randint(0, 100)
+    return temp
 
-def write_temp():
-    print("Writing the temperature to the database.")
-    logging.info("Writing the temperature to the database.")
+def write_temp(temp, device, db):
+    t = datetime.datetime.now()
+    sql = "INSERT INTO " + database + ".log (device, temperature, created_at) VALUES ('" + device + "', '" + str(temp) + "', '" + str(t) + "');"
+    # execute_query(db, sql)
+    logging.info("Record Insered into " + database + ".log")
+    logging.info(device + " | " + str(temp) + " | " + str(t))  
     return
 
-def check_temp():
-    print("Checking the temperature.")
-    logging.info("Checking the temperature.")
+def check_temp(temp):
     d = bool(random.getrandbits(1))
-    logging.info("Temperature is: " + str(d))
+    logging.info("Temperature is in range: " + str(d))
+    # for production: Devices will be passed in, or list of min / max temperatures will be passed in to compare against.
     return d
 
 def send_email():
-    print("Sending email.")
-    logging.info("Sending email.")
+    logging.info("Sending email. Temperature out of range")
     return
+
+def execute_query(db, sql):
+    try:
+        mycursor = db.cursor()
+        mycursor.execute(sql)
+        myresult = mycursor.fetchall()
+    except: 
+        t = datetime.datetime.now()
+        l = currentframe().f_lineno
+        m = str(t) + " | Error, line " + str(l)
+        logging.error(m + " | Unable to query database.")
+        logging.info("Statement: " + str(sql))
+        logging.info(type(e))
+        logging.info(e)
+        db.close()
+        sys.exit()
+    return myresult
 
 # Main control loop
 while True:
-    db_connect()
-    devices = get_devices()
+    dev_db = db_connect()
+    devices = get_devices(dev_db)
     for d in devices:
-        get_temp()
-        write_temp()
-        c = check_temp()
-        if c == True:
+        temp = get_temp()
+        write_temp(temp, d, dev_db)
+        c = check_temp(temp)
+        if c == False:
             send_email()
     logging.info("Sleeping for 5 seconds.")
     time.sleep(5)
     logging.info("Waking up.")
     logging.info("Program complete.")
     break
+
+dev_db.close()
