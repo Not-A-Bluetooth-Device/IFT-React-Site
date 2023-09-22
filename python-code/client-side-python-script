@@ -28,7 +28,9 @@ import mysql.connector as mysql
 logging.basicConfig(filename='temperature_logger.log', level=logging.INFO)
 global test_mode
 global database
+global conv_celsius
 test_mode = True
+conv_celsius = True
 database = "dam" # this will be the client code from our users / clients table.
 
 try: 
@@ -64,8 +66,13 @@ def get_devices(db):
     logging.info("Waking up.")
     return [row[0] for row in result]
 
-def get_temp():
-    temp = random.randint(0, 100)
+def get_temp(sense):
+    if not test_mode:
+        temp = round(sense.temperature,1)
+    else:
+        temp = random.randint(-5,50)
+    if conv_celsius:
+        temp = round((9/5)*temp + 32),1)
     return temp
 
 def write_temp(temp, device, db):
@@ -87,13 +94,13 @@ def check_temp(temp):
 
 def notify_user(temp, sensor):
     t = datetime.datetime.now()
-    if test_mode == True:
+    if not test_mode:
+        # Send email alert
+        logging.info("Message from: " + sensor + " | Info: " + temp)
+    else:
         logging.info("Temperature out of range, sending email alert.")
         logging.info("Email sent at: " + str(t))
         logging.info("Temperature: " + str(temp) + " | Sensor: " + str(sensor))
-    else:
-        # Send email alert
-        logging.info("Message from: " + sensor + " | Info: " + temp)
     return
 
 def execute_query(db, sql, values=None):
@@ -121,11 +128,12 @@ def execute_query(db, sql, values=None):
 try:
     dev_db = db_connect()
     devices = get_devices(dev_db)
+    sense = SenseHat()
 
     while True:
         logging.info("Waking up.")
         for sensor in devices:
-            temp = get_temp()
+            temp = get_temp(sense)
             write_temp(temp, sensor, dev_db)
             temp_in_range = check_temp(temp)
             if temp_in_range == False:
