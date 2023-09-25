@@ -57,7 +57,8 @@ def db_connect():
         logging.error(m + " | Unable to connect to the database.")
         logging.info(type(e))
         logging.info(e)
-        sys.exit()
+        if not test_mode:
+            sys.exit()
     return dvc
 
 def get_devices(db):
