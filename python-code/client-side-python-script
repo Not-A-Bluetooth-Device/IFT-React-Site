@@ -25,6 +25,8 @@ import sys
 import os
 from inspect import currentframe
 import mysql.connector as mysql
+if not os.path.exists('./temperature_logger.log'):
+    os.mknod('./temperature_logger.log')
 logging.basicConfig(filename='temperature_logger.log', level=logging.INFO)
 global test_mode
 global database
@@ -62,7 +64,7 @@ def db_connect():
     return dvc
 
 def get_devices(db):
-    sql = "SELECT desk FROM " + database + ".users WHERE deleted_at IS NULL AND desk IS NOT NULL LIMIT 25;"
+    sql = "SELECT id FROM " + database + ".devices WHERE deleted_at IS NULL;"
     result = execute_query(db, sql)
     logging.info("Waking up.")
     return [row[0] for row in result]
@@ -71,20 +73,20 @@ def get_temp(sense):
     if not test_mode:
         temp = round(sense.temperature,1)
     else:
-        temp = random.randint(-5,50)
+        # temp = random.randint(-5,50)
+        temp = round(sense.temperature,1)
     if conv_celsius:
-        temp = round((9/5)*temp + 32),1)
+        temp = round(((9/5)*temp + 32),1)
     return temp
 
 def write_temp(temp, device, db):
     t = datetime.datetime.now()
     sql = "INSERT INTO " + database + ".log (device, temperature, created_at) VALUES (%s, %s, %s);"
     values = (device, temp, t)
-    if test_mode == True:
-        logging.info("Record Insered into " + database + ".log")
-        logging.info(device + " | " + str(temp) + " | " + str(t))  
-    else:
+    if not test_mode:
         execute_query(db, sql, values)
+    else:
+        logging.info("Temperature Measured: " + str(temp) + " on " + str(device) + " at " + str(t))
     return
 
 def check_temp(temp):
@@ -97,11 +99,9 @@ def notify_user(temp, sensor):
     t = datetime.datetime.now()
     if not test_mode:
         # Send email alert
-        logging.info("Message from: " + sensor + " | Info: " + temp)
+        logging.info("Message from: " + str(sensor) + " | Info: " + str(temp))
     else:
-        logging.info("Temperature out of range, sending email alert.")
-        logging.info("Email sent at: " + str(t))
-        logging.info("Temperature: " + str(temp) + " | Sensor: " + str(sensor))
+        logging.info("Temp out of range, Email sent at: " + str(t))
     return
 
 def execute_query(db, sql, values=None):
@@ -127,9 +127,14 @@ def execute_query(db, sql, values=None):
 
 # Main control loop
 try:
-    dev_db = db_connect()
-    devices = get_devices(dev_db)
+    # dev_db = db_connect()
+    # devices = get_devices(dev_db)
+    dev_db = ""
+    devices = ["dev1", "dev2"]
     sense = SenseHat()
+    t = datetime.datetime.now()
+    logging.info("====== New Run Started ======")
+    logging.info(str(t))
 
     while True:
         logging.info("Waking up.")
@@ -142,7 +147,8 @@ try:
         logging.info("Sleeping for 15 minutes.")
         time.sleep(1) # Sleep will be set to 15 minutes or something
         if test_mode == True: # Break out of the loop after one iteration while testing
-            dev_db.close()
+            logging.info("====== Run completed successfully ======")
+            # dev_db.close()
             break 
 except Exception as e:
     t = datetime.datetime.now()
@@ -154,5 +160,5 @@ except Exception as e:
     err1 = "Main Control Loop"
     err2 = "Program aborted, restart on brdige."
     notify_user(err1, err2)
-    dev_db.close()
+    # dev_db.close()
     sys.exit()
