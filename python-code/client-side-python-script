@@ -35,9 +35,9 @@ try:
     global test_mode
     global database
     global conv_celsius
-    test_mode = True
+    test_mode = False
     conv_celsius = True
-    database = "dam" # this will be the client code from our users / clients table.
+    database = "tbd_dam" # this will be the client code from our users / clients table.
 except Exception as e:
     t = datetime.datetime.now()
     l = currentframe().f_lineno
@@ -50,9 +50,10 @@ except Exception as e:
 def db_connect():
     try:
         dvc = mysql.connect(
-            host = "", # Host will be identical for each instance of this script.
-            user="", # Username and password would be hard-coded in?
-            password="") # Database is populated as a global variable on line 32, this will be the client specific database.
+            host = "192.168.1.23", # Host will be identical for each instance of this script.
+            user="dmyerscough", # Username and password would be hard-coded in?
+            password="password",
+            database=database)
     except Exception as e:
         t = datetime.datetime.now()
         l = currentframe().f_lineno
@@ -123,8 +124,7 @@ def execute_query(db, sql, values=None):
 
 # Main control loop
 try:
-    # dev_db = db_connect()
-    dev_db = ""
+    dev_db = db_connect()
     devices = get_devices(dev_db)
     sense = SenseHat()
     t = datetime.datetime.now()
@@ -143,7 +143,7 @@ try:
         time.sleep(1) # Sleep will be set to 15 minutes or something
         if test_mode: # Break out of the loop after one iteration while testing
             logging.info("====== Run completed successfully ======")
-            # dev_db.close()
+            dev_db.close()
             break 
 except Exception as e:
     t = datetime.datetime.now()
@@ -155,5 +155,5 @@ except Exception as e:
     err1 = "Main Control Loop"
     err2 = "Program aborted, restart on bridge."
     notify_user(err1, err2)
-    # dev_db.close()
+    dev_db.close()
     sys.exit()
