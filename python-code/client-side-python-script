@@ -35,9 +35,17 @@ try:
     global test_mode
     global database
     global conv_celsius
-    test_mode = False
+    test_mode = True
     conv_celsius = True
     database = "tbd_dam" # this will be the client code from our users / clients table.
+    dev_id = "01dampi" # This script will run on 1 device, so this will be hard-coded.
+    class Device:
+        def __init__(self):
+            self.id = "Zero"
+            self.max_temp = 1000
+            self.min_temp = -1000
+            self.alert_user = ""
+
 except Exception as e:
     t = datetime.datetime.now()
     l = currentframe().f_lineno
@@ -52,8 +60,7 @@ def db_connect():
         dvc = mysql.connect(
             host = "192.168.1.23", # Host will be identical for each instance of this script.
             user="dmyerscough", # Username and password would be hard-coded in?
-            password="password",
-            database=database)
+            password="password" )
     except Exception as e:
         t = datetime.datetime.now()
         l = currentframe().f_lineno
@@ -66,13 +73,14 @@ def db_connect():
     return dvc
 
 def get_devices(db):
-    if not test_mode:
-        sql = "SELECT id FROM " + database + ".devices WHERE deleted_at IS NULL;"
-        result = execute_query(db, sql)
-        return [row[0] for row in result]
-    else:
-        result = ["device-1", "device-2", "device-3"]
-        return result
+    sql = "SELECT max_temp, min_temp, alert_user FROM " + database + ".devices WHERE deleted_at IS NULL AND id = " + dev_id + ";"
+    result = execute_query(db, sql)
+    device = Device()
+    device.id = dev_id
+    device.max_temp = result[0][0]
+    device.min_temp = result[0][1]
+    device.alert_user = result[0][2]
+    return device
 
 def get_temp(sense):
     temp = round(sense.temperature,1)
@@ -82,50 +90,59 @@ def get_temp(sense):
 
 def write_temp(temp, device, db):
     t = datetime.datetime.now()
-    sql = "INSERT INTO " + database + ".log (device, temperature, created_at) VALUES (%s, %s, %s);"
-    values = (device, temp, t)
+    sql = "INSERT INTO " + database + ".logs (logged_at, logged_temp, device_id) VALUES (%s, %s, %s);"
+    values = (t, temp, device)
     if not test_mode:
         execute_query(db, sql, values)
     logging.info("Temperature Measured: " + str(temp) + " on " + str(device) + " at " + str(t))
     return
 
-def check_temp(temp):
-    d = random.choice([True, False])
-    logging.info("Temperature is in range: " + str(d))
-    # for production: Devices will be passed in, or list of min / max temperatures will be passed in to compare against.
-    return d
+def check_temp(temp, sensor, dev_db):
+    if temp > sensor.max_temp or temp < sensor.min_temp:
+        t = datetime.datetime.now()
+        logging.info("Temperature out of range at " + str(t))
+        if sensor.alert_user != "":
+            notify_user(temp, sensor, dev_db)
+    return
 
-def notify_user(temp, sensor):
+def notify_user(temp, sensor, dev_db):
     t = datetime.datetime.now()
-    # Send email or phone alert to user?
-    logging.info("Temp out of range, Email sent at: " + str(t))
+    sql = "SELECT email FROM app_users.users WHERE user_id = " + sensor.alert_user + ";"
+    user_email = execute_query(dev_db, sql)
+    user_email = user_email[0][0]
+    # logging.handlers.SMTPHandler() for emails?
+    logging.info("Temp out of range, Email sent to: " + user_email)
     return
 
 def execute_query(db, sql, values=None):
-    try:
-        mycursor = db.cursor()
-        if values == None:
-            mycursor.execute(sql)
-        else:
-            mycursor.execute(sql, values)
-        myresult = mycursor.fetchall()
-        # db.commit() Not doing this on the Wilber server
-    except Exception as e: 
-        t = datetime.datetime.now()
-        l = currentframe().f_lineno
-        m = str(t) + " | Error, line " + str(l)
-        logging.error(m + " | Unable to query database.")
-        logging.info("Statement: " + str(sql))
-        logging.info(type(e))
-        logging.info(e)
-        db.close()
-        sys.exit()
-    return myresult
+    if not test_mode:
+        try:
+            mycursor = db.cursor()
+            if values == None:
+                mycursor.execute(sql)
+            else:
+                mycursor.execute(sql, values)
+            myresult = mycursor.fetchall()
+            db.commit()
+        except Exception as e: 
+            t = datetime.datetime.now()
+            l = currentframe().f_lineno
+            m = str(t) + " | Error, line " + str(l)
+            logging.error(m + " | Unable to query database.")
+            logging.info("Statement: " + str(sql))
+            logging.info(type(e))
+            logging.info(e)
+            db.close()
+            sys.exit()
+        return myresult
+    else:
+        result = "Test mode, no query executed."
+        return result
 
 # Main control loop
 try:
     dev_db = db_connect()
-    devices = get_devices(dev_db)
+    sensor = get_devices(dev_db)
     sense = SenseHat()
     t = datetime.datetime.now()
     logging.info("====== New Script Started ======")
@@ -133,12 +150,9 @@ try:
 
     while True:
         logging.info("====== Waking up ======")
-        for sensor in devices:
-            temp = get_temp(sense)
-            write_temp(temp, sensor, dev_db)
-            temp_in_range = check_temp(temp)
-            if not temp_in_range:
-                notify_user(temp, sensor)
+        temp = get_temp(sense)
+        write_temp(temp, sensor.id, dev_db)
+        temp_in_range = check_temp(temp, sensor, dev_db)
         logging.info("====== Sleeping for 15 minutes ======")
         time.sleep(1) # Sleep will be set to 15 minutes or something
         if test_mode: # Break out of the loop after one iteration while testing
