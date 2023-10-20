@@ -93,8 +93,8 @@ def get_temp(sense):
 
 def write_temp(temp, device, db):
     t = datetime.datetime.now()
-    sql = "INSERT INTO " + database + ".logs (logged_at, logged_temp, device_id) VALUES (%s, %s, %s);"
-    values = (t, temp, device)
+    sql = "INSERT INTO " + database + ".logs (logged_at, logged_temp, device_id, is_F) VALUES (%s, %s, %s, %s);"
+    values = (t, temp, device, conv_celsius)
     if not test_mode:
         execute_query(db, sql, values)
     logging.info("Temperature Measured: " + str(temp) + " on " + str(device) + " at " + str(t))
