@@ -44,6 +44,7 @@ try:
             self.id = "Zero"
             self.max_temp = 1000
             self.min_temp = -1000
+            self.alert_bool = 0
             self.alert_user = ""
 
 except Exception as e:
@@ -74,13 +75,14 @@ def db_connect():
     return dvc
 
 def get_devices(db):
-    sql = "SELECT max_temp, min_temp, alert_user FROM " + database + ".devices WHERE deleted_at IS NULL AND serial_num = \"" + dev_id + "\";"
+    sql = "SELECT max_temp, min_temp, alert_bool, alert_user FROM " + database + ".devices WHERE deleted_at IS NULL AND serial_num = \"" + dev_id + "\";"
     result = execute_query(db, sql)
     device = Device()
     device.id = dev_id
     device.max_temp = result[0][0]
     device.min_temp = result[0][1]
-    device.alert_user = result[0][2]
+    device.alert_bool = result[0][2]
+    device.alert_user = result[0][3]
     return device
 
 def get_temp(sense):
@@ -102,7 +104,7 @@ def check_temp(temp, sensor, dev_db):
     if temp > sensor.max_temp or temp < sensor.min_temp:
         t = datetime.datetime.now()
         logging.info("Temperature out of range at " + str(t))
-        if sensor.alert_user != "":
+        if sensor.alert_bool == 1:
             notify_user(temp, sensor, dev_db)
     return
 
@@ -115,7 +117,7 @@ def notify_user(temp, sensor, dev_db):
         # logging.handlers.SMTPHandler() for emails?
         logging.info("Temp out of range, Email sent to: " + user_email)
     except TypeError:
-        logging.info("Temp out of range, no alertuser set")
+        logging.info("Temp out of range, no alert user set")
     return
 
 def execute_query(db, sql, values=None):
@@ -199,20 +201,35 @@ try:
     logging.info(str(t))
 
     while True:
-        logging.info("====== Waking up ======")
-        color_burst(sense)
-        temp = get_temp(sense)
-        write_temp(temp, sensor.id, dev_db)
-        temp_in_range = check_temp(temp, sensor, dev_db)
-        col = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
-        sense.show_message(str(temp),text_colour=col)
-        logging.info("====== Sleeping for 15 minutes ======")
-        time.sleep(1200) # Sleep will be set to 15 minutes or something
-        if test_mode: # Break out of the loop after one iteration while testing
-            logging.info("====== Run completed successfully ======")
+        try:
+            logging.info("====== Waking up ======")
+            color_burst(sense)
+            temp = get_temp(sense)
+            write_temp(temp, sensor.id, dev_db)
+            temp_in_range = check_temp(temp, sensor, dev_db)
+            col = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+            sense.show_message(str(temp),text_colour=col)
+            color_burst(sense)
+            sleep_time = 20
+            logging.info("====== Sleeping for " + str(sleep_time) + " minutes ======")
+            time.sleep(sleep_time*60) # Sleep will be set to 15 minutes or something
+            if test_mode: # Break out of the loop after one iteration while testing
+                logging.info("====== Run completed successfully ======")
+                dev_db.close()
+                break
+        execpt Exception as e:
+            logging.info("====== Run failed mid-cycle ======")
+            t = datetime.datetime.now()
+            l = currentframe().f_lineno
+            m = str(t) + " | Error, line " + str(l)
+            logging.error(m + " | Error during cycle, restart python script on Pi")
+            logging.info(type(e))
+            logging.info(e) 
             dev_db.close()
-            break 
+            sys.exit()
+
 except Exception as e:
+    logging.info("====== Run failed to start ======")
     t = datetime.datetime.now()
     l = currentframe().f_lineno
     m = str(t) + " | Error, line " + str(l)
