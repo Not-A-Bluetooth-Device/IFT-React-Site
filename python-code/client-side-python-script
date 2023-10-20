@@ -38,7 +38,7 @@ try:
     test_mode = False
     conv_celsius = True
     database = "tbd_dam" # this will be the client code from our users / clients table.
-    dev_id = "01dampi" # This script will run on 1 device, so this will be hard-coded.
+    dev_id = "02rbapi" # This script will run on 1 device, so this will be hard-coded.
     class Device:
         def __init__(self):
             self.id = "Zero"
@@ -58,9 +58,10 @@ except Exception as e:
 def db_connect():
     try:
         dvc = mysql.connect(
-            host = "192.168.1.23", # Host will be identical for each instance of this script.
-            user="dmyerscough", # Username and password would be hard-coded in?
-            password="password" )
+            host = "98.226.164.218", # Host will be identical for each instance of this script.
+            user="rabernethy", # Username and password would be hard-coded in?
+            password="password",
+            port=33060)
     except Exception as e:
         t = datetime.datetime.now()
         l = currentframe().f_lineno
