@@ -35,7 +35,7 @@ try:
     global test_mode
     global database
     global conv_celsius
-    test_mode = True
+    test_mode = False
     conv_celsius = True
     database = "tbd_dam" # this will be the client code from our users / clients table.
     dev_id = "01dampi" # This script will run on 1 device, so this will be hard-coded.
@@ -73,7 +73,7 @@ def db_connect():
     return dvc
 
 def get_devices(db):
-    sql = "SELECT max_temp, min_temp, alert_user FROM " + database + ".devices WHERE deleted_at IS NULL AND id = " + dev_id + ";"
+    sql = "SELECT max_temp, min_temp, alert_user FROM " + database + ".devices WHERE deleted_at IS NULL AND serial_num = \"" + dev_id + "\";"
     result = execute_query(db, sql)
     device = Device()
     device.id = dev_id
@@ -107,11 +107,14 @@ def check_temp(temp, sensor, dev_db):
 
 def notify_user(temp, sensor, dev_db):
     t = datetime.datetime.now()
-    sql = "SELECT email FROM app_users.users WHERE user_id = " + sensor.alert_user + ";"
-    user_email = execute_query(dev_db, sql)
-    user_email = user_email[0][0]
-    # logging.handlers.SMTPHandler() for emails?
-    logging.info("Temp out of range, Email sent to: " + user_email)
+    try:
+        sql = "SELECT email FROM app_users.users WHERE user_id = " + sensor.alert_user + ";"
+        user_email = execute_query(dev_db, sql)
+        user_email = user_email[0][0]
+        # logging.handlers.SMTPHandler() for emails?
+        logging.info("Temp out of range, Email sent to: " + user_email)
+    except TypeError:
+        logging.info("Temp out of range, no alertuser set")
     return
 
 def execute_query(db, sql, values=None):
@@ -139,22 +142,71 @@ def execute_query(db, sql, values=None):
         result = "Test mode, no query executed."
         return result
 
+def color_burst(sense):
+    i = 0
+    while i < 10:
+        sense = SenseHat()
+        a = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        b = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        c = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        d = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        e = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        f = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        g = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        h = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        j = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        k = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        l = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        m = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        n = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        o = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        p = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        q = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        r = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        s = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        t = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        u = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        v = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        w = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        x = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        y = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        z = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        target = [
+        a, b, c, d, e, f, g, h,
+        d, j, k, l, m, n, o, p,
+        q, r, s, t, w, x, y, z,
+        k, l, a, t, x, y, v, q,
+        g, e, v, z, p, e, w, a,
+        v, o, w, p, q, b, l, s, 
+        u, o, p, a, x, l, r, b, 
+        e, j, k, y, s, a, e, p
+        ]
+        sense.set_pixels(target)
+        time.sleep(0.1)
+        i = i + 1
+
+    return
+
 # Main control loop
 try:
     dev_db = db_connect()
     sensor = get_devices(dev_db)
     sense = SenseHat()
+    sense.set_rotation(180)
     t = datetime.datetime.now()
     logging.info("====== New Script Started ======")
     logging.info(str(t))
 
     while True:
         logging.info("====== Waking up ======")
+        color_burst(sense)
         temp = get_temp(sense)
         write_temp(temp, sensor.id, dev_db)
         temp_in_range = check_temp(temp, sensor, dev_db)
+        col = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+        sense.show_message(str(temp),text_colour=col)
         logging.info("====== Sleeping for 15 minutes ======")
-        time.sleep(1) # Sleep will be set to 15 minutes or something
+        time.sleep(1200) # Sleep will be set to 15 minutes or something
         if test_mode: # Break out of the loop after one iteration while testing
             logging.info("====== Run completed successfully ======")
             dev_db.close()
@@ -166,8 +218,5 @@ except Exception as e:
     logging.error(m + " | Unable to run main control loop.")
     logging.info(type(e))
     logging.info(e)
-    err1 = "Main Control Loop"
-    err2 = "Program aborted, restart on bridge."
-    notify_user(err1, err2)
     dev_db.close()
     sys.exit()
