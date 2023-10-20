@@ -60,8 +60,8 @@ def db_connect():
     try:
         dvc = mysql.connect(
             host = "98.226.164.218", # Host will be identical for each instance of this script.
-            user="rabernethy", # Username and password would be hard-coded in?
-            password="password",
+            user="", # Username and password would be hard-coded in?
+            password="",
             port=33060)
     except Exception as e:
         t = datetime.datetime.now()
